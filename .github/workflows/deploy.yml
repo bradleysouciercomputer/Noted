@@ -24,6 +24,16 @@ jobs:
         run: |
           mkdir -p source
           xz -d -c source/noted-project.tar.xz | tar -xf - -C .
+      - name: Normalize Angular workspace schema version
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('apps/angular/angular.json')
+          config = json.loads(path.read_text())
+          config['version'] = 1
+          path.write_text(json.dumps(config, indent=2) + '\\n')
+          PY
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
