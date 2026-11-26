@@ -1,0 +1,59 @@
+name: Build and deploy Noted
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Expand source project
+        run: |
+          mkdir -p source
+          base64 -d source/noted-project.tar.zst.b64 | zstd -d -c | tar -xf - -C .
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install MUI and Material Web dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build selector, MUI, and Material 3 apps
+        run: npm run build
+      - name: Install Angular Material dependencies
+        run: npm install --prefix apps/angular --no-audit --no-fund
+      - name: Build Angular Material app
+        run: npm --prefix apps/angular run build -- --base-href /Noted/angular/ --output-path ../../dist/angular
+      - name: Flatten Angular browser output for Pages
+        run: |
+          if [ -d dist/angular/browser ]; then
+            cp -R dist/angular/browser/. dist/angular/
+            rm -rf dist/angular/browser
+          fi
+          touch dist/.nojekyll
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
