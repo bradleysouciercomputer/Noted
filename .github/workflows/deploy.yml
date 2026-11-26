@@ -33,6 +33,13 @@ jobs:
           config = json.loads(path.read_text())
           config['version'] = 1
           path.write_text(json.dumps(config, indent=2) + '\n')
+          tsconfig_path = Path('apps/angular/tsconfig.json')
+          tsconfig = json.loads(tsconfig_path.read_text())
+          tsconfig.get('compilerOptions', {}).pop('baseUrl', None)
+          tsconfig_path.write_text(json.dumps(tsconfig, indent=2) + '\n')
+          styles_path = Path('apps/angular/src/styles.css')
+          styles_path.parent.mkdir(parents=True, exist_ok=True)
+          styles_path.write_text("html,\nbody { min-height: 100%; margin: 0; font-family: Roboto, Arial, sans-serif; background: #f8f9fa; }\n*, *::before, *::after { box-sizing: border-box; }\n")
           PY
       - name: Set up Node.js
         uses: actions/setup-node@v4
