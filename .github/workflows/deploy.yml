@@ -23,7 +23,7 @@ jobs:
       - name: Expand source project
         run: |
           mkdir -p source
-          base64 -d source/noted-project.tar.zst.b64 | zstd -d -c | tar -xf - -C .
+          zstd -d -c source/noted-project.tar.zst | tar -xf - -C .
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
